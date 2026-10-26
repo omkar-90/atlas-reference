@@ -1,0 +1,166 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Spider & Radar Charts: Multi-Criteria Profile Benchmarking
+
+The **Spider / Radar Chart** (also known as a Kiviat diagram or star plot) provides a radial, equiangular visualization for benchmarking discrete design variants against baseline performance targets across multiple criteria simultaneously. In multi-attribute decision making, radar charts allow users to compare complete design signatures at a glance and ensure balanced system performance.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Design Signature Comparison**: Superimposing a candidate design polygon against a baseline envelope immediately reveals where performance is gained or compromised.
+- **Axis Permutation Awareness**: The enclosed polygonal area depends on the ordering of the axes; related physical criteria (e.g. structural, aerodynamic, thermal) should be grouped together.
+- **Normalized Dimensions**: All metrics are rescaled to a common $[0, 1]$ interval, preventing large-magnitude metrics (e.g. Pressure in Pa) from masking fractional metrics (e.g. Drag Coefficient $C_D$).
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Graphic Interpretation
+
+<ChartPreview caption="Figure 1: Radar Chart benchmarking an Optimized Candidate Design (blue fill) against the Baseline Reference Design (dashed gray) across five normalized performance criteria.">
+  <svg viewBox="0 0 540 320" className="w-full h-auto max-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Concentric Polygons / Rings */}
+    <g stroke="var(--border-color)" strokeWidth="1" fill="none">
+      {/* 1.0 Outer Ring */}
+      <polygon points="270,40 403,137 352,293 188,293 137,137" fill="var(--ifm-background-surface-color)" opacity="0.5" />
+      {/* 0.75 Ring */}
+      <polygon points="270,75 370,148 331,265 209,265 170,148" />
+      {/* 0.50 Ring */}
+      <polygon points="270,110 336,158 311,237 229,237 204,158" />
+      {/* 0.25 Ring */}
+      <polygon points="270,145 303,169 290,208 250,208 237,169" />
+    </g>
+
+    {/* 5 Radial Spoke Lines from Center (270, 180) */}
+    <g stroke="var(--ifm-font-color-base)" strokeWidth="1" opacity="0.4">
+      <line x1="270" y1="180" x2="270" y2="40" />
+      <line x1="270" y1="180" x2="403" y2="137" />
+      <line x1="270" y1="180" x2="352" y2="293" />
+      <line x1="270" y1="180" x2="188" y2="293" />
+      <line x1="270" y1="180" x2="137" y2="137" />
+    </g>
+
+    {/* Axis Metric Labels */}
+    <text x="270" y="28" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="middle" fontWeight="600">Efficiency</text>
+    <text x="415" y="140" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600">Thermal Margin</text>
+    <text x="365" y="310" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600">Durability</text>
+    <text x="175" y="310" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="600">Low Mass</text>
+    <text x="125" y="140" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="600">Low Cost</text>
+
+    {/* Baseline Design (Dashed Polygon) */}
+    <polygon points="270,110 336,158 311,237 229,237 204,158" fill="none" stroke="var(--ifm-color-emphasis-700)" strokeWidth="2" strokeDasharray="4 3" />
+    
+    {/* Optimized Candidate Design (Blue Polygon) */}
+    <polygon points="270,55 385,142 340,280 215,255 180,150" fill="#2e5aac" fillOpacity="0.25" stroke="#2e5aac" strokeWidth="2.5" />
+    <g fill="#2e5aac">
+      <circle cx="270" cy="55" r="4.5" stroke="#fff" strokeWidth="1" />
+      <circle cx="385" cy="142" r="4.5" stroke="#fff" strokeWidth="1" />
+      <circle cx="340" cy="280" r="4.5" stroke="#fff" strokeWidth="1" />
+      <circle cx="215" cy="255" r="4.5" stroke="#fff" strokeWidth="1" />
+      <circle cx="180" cy="150" r="4.5" stroke="#fff" strokeWidth="1" />
+    </g>
+
+    {/* Legend */}
+    <g transform="translate(380, 20)">
+      <line x1="0" y1="0" x2="20" y2="0" stroke="var(--ifm-color-emphasis-700)" strokeWidth="2" strokeDasharray="4 2" />
+      <text x="26" y="4" fill="var(--ifm-color-emphasis-700)" fontSize="10">Baseline</text>
+      <line x1="0" y1="16" x2="20" y2="16" stroke="#2e5aac" strokeWidth="2.5" />
+      <text x="26" y="20" fill="var(--ifm-font-color-base)" fontSize="10" fontWeight="600">Optimized</text>
+    </g>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Plot
+
+### 1. Axes & Coordinates
+- **Concentric Webs**: Represent normalized score rings, expanding from $0.0$ at the center hub to $1.0$ at the outermost perimeter.
+- **Radial Spokes**: Each spoke represents an evaluation criterion. Spoke vertices are positioned so that larger radius ($r \to 1.0$) corresponds to better or compliant performance.
+- **Polygonal Footprint**: Each design variant forms a connected loop across all spokes.
+
+### 2. Comparative Analysis (Candidate vs. Baseline)
+- **Outward Bulges**: In Figure 1, the candidate design expands outward on **Efficiency** and **Thermal Margin**, indicating substantial improvements over the baseline.
+- **Inward Retreats**: Look for any vertices retracting toward the center. If a design retreats inside the baseline polygon on any critical spoke, that design suffers from a performance penalty.
+- **Balanced vs. Skewed Profiles**: A symmetrical, balanced polygon indicates robust multidisciplinary performance, whereas a spiked, asymmetrical shape indicates a design over-specialized on one metric at the expense of others.
+
+---
+
+## Mathematical Formulation
+
+Let $K$ be the number of normalized criteria. In a spider plot, $K$ equiangular radial axes radiate from a common origin:
+
+$$\theta_k = \frac{2\pi (k - 1)}{K}, \quad k \in \{1, \dots, K\}$$
+
+### Boundary Normalization
+
+Given metric value $z_k$ for a candidate design, its radial coordinate $r_k \in [0, 1]$ is:
+
+$$r_k = \frac{z_k - z_k^{\min}}{z_k^{\max} - z_k^{\min}}$$
+
+Cartesian coordinates $(u_k, v_k)$ are obtained via polar transformation:
+
+$$u_k = r_k \cos(\theta_k), \qquad v_k = r_k \sin(\theta_k)$$
+
+### Enclosed Polygon Area
+
+The area $A$ enclosed by the polygon connecting vertices $\mathbf{v}_1, \dots, \mathbf{v}_K, \mathbf{v}_1$ is computed using the cross-product formula:
+
+$$A = \frac{1}{2} \sin\left(\frac{2\pi}{K}\right) \sum_{k=1}^K r_k r_{k+1}, \quad \text{with } r_{K+1} \equiv r_1$$
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="Graphical Methods for Data Analysis"
+  authors="Chambers, John M., Cleveland, William S., Kleiner, Beat, & Tukey, Paul A."
+  source="Wadsworth & Brooks/Cole Publishing Company, ISBN: 978-0-534-98052-8"
+  year="1983"
+  indexing="Foundational Data Graphics Landmark Text"
+  doi="https://archive.org/details/graphicalmethods0000cham"
+  bibtex={`@book{chambers1983graphical,
+  title={Graphical Methods for Data Analysis},
+  author={Chambers, John M and Cleveland, William S and Kleiner, Beat and Tukey, Paul A},
+  year={1983},
+  publisher={Wadsworth \\& Brooks/Cole}
+}`}
+/>
+
+<CitationCard
+  title="How to Make a Decision: The Analytic Hierarchy Process"
+  authors="Saaty, Thomas L."
+  source="European Journal of Operational Research, Vol. 48, No. 1, pp. 9–26"
+  year="1990"
+  indexing="Elsevier / Scopus Q1"
+  doi="10.1016/0377-2217(90)90057-I"
+  bibtex={`@article{saaty1990make,
+  title={How to make a decision: the analytic hierarchy process},
+  author={Saaty, Thomas L},
+  journal={European Journal of Operational Research},
+  volume={48},
+  number={1},
+  pages={9--26},
+  year={1990},
+  publisher={Elsevier}
+}`}
+/>
+
+<CitationCard
+  title="Software Physics Representation and Analysis of Software System Performance"
+  authors="Kolence, Kenneth W., & Kiviat, Philip J."
+  source="ACM SIGMETRICS Performance Evaluation Review, Vol. 2, No. 3, pp. 13–24"
+  year="1973"
+  indexing="ACM Digital Library / Originator of Kiviat Diagrams"
+  doi="10.1145/1041613.1041615"
+  bibtex={`@article{kolence1973software,
+  title={Software physics representation and analysis of software system performance},
+  author={Kolence, Kenneth W and Kiviat, Philip J},
+  journal={ACM SIGMETRICS Performance Evaluation Review},
+  volume={2},
+  number={3},
+  pages={13--24},
+  year={1973},
+  publisher={ACM}
+}`}
+/>

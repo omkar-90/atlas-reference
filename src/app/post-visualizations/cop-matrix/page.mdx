@@ -1,0 +1,177 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Coefficient of Prognosis (CoP) & Variance-Based Global Sensitivity
+
+The **Coefficient of Prognosis (CoP) Matrix** is a post-training surrogate diagnostic that evaluates how much variance in each output response is explained by individual input features. Unlike standard $R^2$ metrics that artificially inflate with model complexity, $\operatorname{CoP}$ measures surrogate generalization across cross-validated test sets, providing an unbiased assessment of feature importance and metamodel predictive power.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Overfitting Immunity**: A model with $R^2 = 0.99$ on training data can exhibit $\operatorname{CoP} = 0.35$ if it memorized simulation noise. The $\operatorname{CoP}$ value reflects true predictive performance on unseen designs.
+- **Total vs. Individual CoP**: Total $\operatorname{CoP}_{\text{total}}$ reflects the overall explainable variance of the surrogate. The matrix cells decompose this total into individual input contributions $\operatorname{CoP}_j$.
+- **Physics Verification**: If an input known from domain physics to drive an output has a near-zero $\operatorname{CoP}$, the surrogate requires additional training points or an adjusted model architecture.
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Graphic Interpretation
+
+<ChartPreview caption="Figure 1: CoP Matrix displaying individual feature contributions and overall Total CoP (bottom row) across two surrogate models.">
+  <svg viewBox="0 0 540 310" className="w-full h-auto max-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Grid Background */}
+    <rect x="150" y="30" width="260" height="235" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" />
+    
+    {/* Labels X (Outputs) */}
+    <text x="215" y="20" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle" fontWeight="600">y₁: Peak Stress</text>
+    <text x="345" y="20" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle" fontWeight="600">y₂: Efficiency</text>
+
+    {/* Labels Y (Inputs) */}
+    <text x="140" y="60" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₁: Radius</text>
+    <text x="140" y="105" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₂: Blade Angle</text>
+    <text x="140" y="150" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₃: Wall Thickness</text>
+    <text x="140" y="195" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₄: Fillet Radius</text>
+
+    {/* Total CoP Label */}
+    <rect x="15" y="220" width="125" height="45" rx="4" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" />
+    <text x="77" y="247" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="middle" fontWeight="600">Total CoP (Model)</text>
+
+    {/* Row 1 (x1) */}
+    <rect x="150" y="30" width="130" height="45" fill="#2e5aac" opacity="0.8" />
+    <text x="215" y="58" fill="#fff" fontSize="12" textAnchor="middle" fontWeight="600">62.4 %</text>
+    <rect x="280" y="30" width="130" height="45" fill="#2e5aac" opacity="0.1" />
+    <text x="345" y="58" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle">2.8 %</text>
+
+    {/* Row 2 (x2) */}
+    <rect x="150" y="75" width="130" height="45" fill="#2e5aac" opacity="0.1" />
+    <text x="215" y="103" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle">3.1 %</text>
+    <rect x="280" y="75" width="130" height="45" fill="#2e5aac" opacity="0.9" />
+    <text x="345" y="103" fill="#fff" fontSize="12" textAnchor="middle" fontWeight="600">79.5 %</text>
+
+    {/* Row 3 (x3) */}
+    <rect x="150" y="120" width="130" height="45" fill="#2e5aac" opacity="0.35" />
+    <text x="215" y="148" fill="#fff" fontSize="12" textAnchor="middle" fontWeight="600">22.8 %</text>
+    <rect x="280" y="120" width="130" height="45" fill="#2e5aac" opacity="0.18" />
+    <text x="345" y="148" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle">8.4 %</text>
+
+    {/* Row 4 (x4) */}
+    <rect x="150" y="165" width="130" height="45" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="0.5" />
+    <text x="215" y="193" fill="var(--ifm-color-emphasis-700)" fontSize="11" textAnchor="middle">0.9 %</text>
+    <rect x="280" y="165" width="130" height="45" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="0.5" />
+    <text x="345" y="193" fill="var(--ifm-color-emphasis-700)" fontSize="11" textAnchor="middle">0.5 %</text>
+
+    {/* Divider before Total CoP */}
+    <line x1="150" y1="210" x2="410" y2="210" stroke="var(--ifm-font-color-base)" strokeWidth="2" />
+
+    {/* Bottom Row: Total CoP */}
+    <rect x="150" y="210" width="130" height="55" fill="#59A14F" opacity="0.2" stroke="#59A14F" strokeWidth="1.5" />
+    <text x="215" y="243" fill="#59A14F" fontSize="13" textAnchor="middle" fontWeight="700">89.2 %</text>
+
+    <rect x="280" y="210" width="130" height="55" fill="#59A14F" opacity="0.2" stroke="#59A14F" strokeWidth="1.5" />
+    <text x="345" y="243" fill="#59A14F" fontSize="13" textAnchor="middle" fontWeight="700">91.2 %</text>
+
+    {/* Status note */}
+    <text x="215" y="295" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle">Quality: Good Metamodel</text>
+    <text x="345" y="295" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle">Quality: Excellent Metamodel</text>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Plot
+
+### 1. Structure of the CoP Matrix
+- **Matrix Body Cells ($\operatorname{CoI}_j$)**: Represent the proportion of response variance attributable to input variable $x_j$ based on cross-validated surrogate predictions.
+- **Bottom Summary Row ($\operatorname{CoP}_{\text{total}}$)**: Reflects the overall quality of the trained surrogate. It evaluates how accurately the metamodel predicts out-of-bag validation points.
+
+### 2. Quality Evaluation Benchmarks
+- **$\operatorname{CoP}_{\text{total}} \ge 90\%$ (Excellent)**: The surrogate accurately captures almost all physical variance. The model is fully validated for global optimization and reliability analysis.
+- **$70\% \le \operatorname{CoP}_{\text{total}} < 90\%$ (Good)**: The model captures dominant physical dynamics. Safe for trade-off exploration and Pareto front extraction.
+- **$50\% \le \operatorname{CoP}_{\text{total}} < 70\%$ (Marginal)**: The model identifies general directional slopes but misses local non-linearities. Additional sampling points should be added in high-curvature regions.
+- **$\operatorname{CoP}_{\text{total}} < 50\%$ (Insufficient)**: The model fails to generalize. Common causes include insufficient sample size, stochastic noise in simulation meshes, or missing primary physical parameters.
+
+### 3. Step-by-Step Diagnostic Routine
+1. **Check the Bottom Row First**: Confirm $\operatorname{CoP}_{\text{total}} \ge 70\%$ before trusting individual feature rankings.
+2. **Scan Column Cells**: Identify the dominant driver (in Figure 1, $x_1$ Radius drives $62.4\%$ of Peak Stress, while $x_2$ Blade Angle drives $79.5\%$ of Efficiency).
+3. **Verify Physical Consistency**: Ensure that known governing parameters show high importance. If a known physical driver displays near-zero importance, check for input saturation or collinear parameter cancellation.
+
+---
+
+## Mathematical Formulation
+
+Developed by Most & Will (2008), the **Total Coefficient of Prognosis** ($\operatorname{CoP}_{\text{total}}$) is defined as:
+
+$$\operatorname{CoP}_{\text{total}} = 1 - \frac{\operatorname{SS}_E^{\text{test}}}{\operatorname{SS}_T} = 1 - \frac{\sum_{i=1}^N \left( y_i - \hat{y}_{(-i)} \right)^2}{\sum_{i=1}^N (y_i - \bar{y})^2}$$
+
+where $y_i$ is the actual solver response, $\bar{y}$ is the sample mean, and $\hat{y}_{(-i)}$ is the cross-validated prediction from a surrogate trained *without* observation $i$.
+
+### Individual Feature Importance
+
+The matrix cells combine the Total $\operatorname{CoP}$ with the **Sobol First-Order Sensitivity Index** $S_j$:
+
+$$\operatorname{CoP}_j = S_j \cdot \operatorname{CoP}_{\text{total}}$$
+
+Under the ANOVA-Sobol decomposition:
+
+$$S_j = \frac{\operatorname{Var}_{x_j}\big(\mathbb{E}_{\mathbf{x}_{\sim j}}[Y \mid x_j]\big)}{\operatorname{Var}(Y)}$$
+
+The total-order index $S_{Tj}$ additionally includes all non-linear interaction terms involving $x_j$:
+
+$$S_{Tj} = 1 - \frac{\operatorname{Var}_{\mathbf{x}_{\sim j}}\big(\mathbb{E}_{x_j}[Y \mid \mathbf{x}_{\sim j}]\big)}{\operatorname{Var}(Y)}$$
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="Sensitivity Analysis Using the Metamodel of Optimal Prognosis (MOP)"
+  authors="Most, Thomas, & Will, J."
+  source="Proceedings of the 8th Weimar Optimization and Stochastic Days, Weimar, Germany"
+  year="2008"
+  indexing="Foundational Engineering Metamodeling Paper"
+  doi="https://www.dynardo.de/fileadmin/files/veranstaltungen/stochastiktage/2008/papers/Most_MOP.pdf"
+  bibtex={`@inproceedings{most2008sensitivity,
+  title={Sensitivity analysis using the Metamodel of Optimal Prognosis (MOP)},
+  author={Most, Thomas and Will, J},
+  booktitle={8th Weimar Optimization and Stochastic Days},
+  year={2008}
+}`}
+/>
+
+<CitationCard
+  title="Global Sensitivity Indices for Nonlinear Mathematical Models and Their Monte Carlo Estimates"
+  authors="Sobol, Ilya M."
+  source="Mathematics and Computers in Simulation, Vol. 55, No. 1–3, pp. 271–280"
+  year="2001"
+  indexing="Elsevier / Scopus Q1 Landmark Paper"
+  doi="10.1016/S0378-4754(00)00270-6"
+  bibtex={`@article{sobol2001global,
+  title={Global sensitivity indices for nonlinear mathematical models and their Monte Carlo estimates},
+  author={Sobol, Ilya M},
+  journal={Mathematics and Computers in Simulation},
+  volume={55},
+  number={1-3},
+  pages={271--280},
+  year={2001},
+  publisher={Elsevier}
+}`}
+/>
+
+<CitationCard
+  title="Making Best Use of Model Evaluations to Compute Sensitivity Indices"
+  authors="Saltelli, Andrea"
+  source="Computer Physics Communications, Vol. 145, No. 2, pp. 280–297"
+  year="2002"
+  indexing="Elsevier / Scopus Q1"
+  doi="10.1016/S0010-4655(02)00280-1"
+  bibtex={`@article{saltelli2002making,
+  title={Making best use of model evaluations to compute sensitivity indices},
+  author={Saltelli, Andrea},
+  journal={Computer Physics Communications},
+  volume={145},
+  number={2},
+  pages={280--297},
+  year={2002},
+  publisher={Elsevier}
+}`}
+/>

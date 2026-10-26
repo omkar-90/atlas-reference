@@ -1,0 +1,171 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Residual Diagnostics & Goodness-of-Fit Verification
+
+The **Residual Diagnostics** module evaluates the accuracy, unbiasedness, and homoscedasticity of trained surrogate models. While summary scalar metrics (such as $R^2$ and $\text{RMSE}$) provide an aggregate score, residual plots reveal localized modeling deficiencies, missing non-linear terms, non-constant variance (heteroscedasticity), and solver convergence outliers.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Predicted vs. Actual Alignment**: High-fidelity surrogate models place points tightly along the $45^\circ$ identity line ($y = \hat{y}$). Systematic deviation at extrema indicates regression shrinkage or under-prediction of physical peaks.
+- **Funnel / Fan Patterns**: Residuals expanding outwards as predicted values increase signal **heteroscedasticity** (variance grows with response magnitude), indicating that a logarithmic or Box-Cox transformation is necessary.
+- **Curvature in Residuals**: U-shaped or parabolic patterns in residuals indicate that the model omitted an important higher-order polynomial interaction.
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Graphic Interpretation
+
+<ChartPreview caption="Figure 1: Dual Residual Diagnostics. (Left) Predicted vs. Actual values along the 45° line. (Right) Residual errors vs. Predicted values around the zero line with ±3σ outlier thresholds.">
+  <svg viewBox="0 0 600 270" className="w-full h-auto max-w-[560px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Panel 1: Predicted vs Actual */}
+    <rect x="30" y="25" width="250" height="200" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" rx="4" />
+    <text x="155" y="16" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="middle" fontWeight="600">Predicted vs. Actual</text>
+    
+    {/* 45 degree line */}
+    <line x1="45" y1="210" x2="265" y2="40" stroke="#59A14F" strokeWidth="1.5" strokeDasharray="4 2" />
+    <text x="250" y="55" fill="#59A14F" fontSize="10" fontWeight="600">y = ŷ</text>
+
+    {/* Points clustered on 45 line */}
+    <g fill="#4E79A7" opacity="0.8">
+      <circle cx="65" cy="195" r="3.5" /><circle cx="75" cy="180" r="3.5" /><circle cx="90" cy="170" r="3.5" />
+      <circle cx="105" cy="160" r="3.5" /><circle cx="120" cy="150" r="3.5" /><circle cx="140" cy="135" r="3.5" />
+      <circle cx="155" cy="120" r="3.5" /><circle cx="170" cy="115" r="3.5" /><circle cx="190" cy="95" r="3.5" />
+      <circle cx="210" cy="85" r="3.5" /><circle cx="230" cy="65" r="3.5" /><circle cx="245" cy="55" r="3.5" />
+      <circle cx="130" cy="148" r="3.5" /><circle cx="180" cy="105" r="3.5" /><circle cx="115" cy="140" r="3.5" />
+    </g>
+
+    {/* Panel 1 Axes labels */}
+    <text x="155" y="245" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle">Actual Response (y)</text>
+    <text x="18" y="125" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle" transform="rotate(-90 18 125)">Predicted (ŷ)</text>
+
+    {/* Panel 2: Residuals vs Predicted */}
+    <rect x="320" y="25" width="250" height="200" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" rx="4" />
+    <text x="445" y="16" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="middle" fontWeight="600">Residuals vs. Predicted</text>
+
+    {/* Zero Line */}
+    <line x1="335" y1="125" x2="555" y2="125" stroke="var(--ifm-font-color-base)" strokeWidth="1.5" />
+    <text x="560" y="129" fill="var(--ifm-color-emphasis-700)" fontSize="9">e = 0</text>
+
+    {/* +/- 3 sigma bounds */}
+    <line x1="335" y1="50" x2="555" y2="50" stroke="#E15759" strokeWidth="1" strokeDasharray="3 2" />
+    <text x="560" y="54" fill="#E15759" fontSize="9">+3σ</text>
+    <line x1="335" y1="200" x2="555" y2="200" stroke="#E15759" strokeWidth="1" strokeDasharray="3 2" />
+    <text x="560" y="204" fill="#E15759" fontSize="9">-3σ</text>
+
+    {/* Residual Points scattered around zero */}
+    <g fill="#4E79A7" opacity="0.8">
+      <circle cx="350" cy="130" r="3.5" /><circle cx="365" cy="115" r="3.5" /><circle cx="380" cy="135" r="3.5" />
+      <circle cx="395" cy="110" r="3.5" /><circle cx="410" cy="140" r="3.5" /><circle cx="425" cy="120" r="3.5" />
+      <circle cx="440" cy="105" r="3.5" /><circle cx="455" cy="135" r="3.5" /><circle cx="470" cy="118" r="3.5" />
+      <circle cx="485" cy="142" r="3.5" /><circle cx="500" cy="115" r="3.5" /><circle cx="520" cy="128" r="3.5" />
+      <circle cx="430" cy="138" r="3.5" /><circle cx="465" cy="110" r="3.5" /><circle cx="400" cy="128" r="3.5" />
+    </g>
+
+    {/* Single Outlier outside 3 sigma */}
+    <circle cx="510" cy="42" r="5" fill="#E15759" stroke="#fff" strokeWidth="1.5" />
+    <text x="500" y="32" fill="#E15759" fontSize="9" fontWeight="600">Outlier</text>
+
+    {/* Panel 2 Axes labels */}
+    <text x="445" y="245" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle">Predicted Value (ŷ)</text>
+    <text x="308" y="125" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle" transform="rotate(-90 308 125)">Residual (e)</text>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Plot
+
+### 1. Predicted vs. Actual (Left Panel)
+- **The $45^\circ$ Target Line (Green)**: Represents exact equality between surrogate predictions and simulation truth ($y = \hat{y}$).
+- **Tight Point Swarm**: A narrow band hugging the $45^\circ$ line indicates high goodness-of-fit and minimal variance.
+- **Extrema Flattens**: If points drift horizontally at the high or low ends, the surrogate is under-predicting physical peaks (regression to the mean).
+
+### 2. Residuals vs. Predicted (Right Panel)
+- **Horizontal Zero Line**: Residual errors $e_i = y_i - \hat{y}_i$ should fluctuate symmetrically around zero without systematic bias.
+- **Random Constant-Width Band**: An even, rectangular scatter of points across all predicted values confirms **homoscedasticity** (constant error variance).
+- **Outlier Threshold ($\pm 3\sigma$)**: Any sample landing outside the red dashed boundaries is a studentized outlier ($|r_i| > 3$) and should be investigated in simulation logs.
+
+### 3. Diagnostic Warning Patterns
+- **Funnel / Megaphone Shape**: Errors widening as $\hat{y}$ increases indicates heteroscedastic variance. Common in fracture mechanics and fluid dynamics where absolute variance scales with response magnitude.
+- **Curved Bow Shape (U or $\cap$)**: A parabolic curve in the residual points indicates that a quadratic or interaction term was missed by the surrogate.
+- **Non-Zero Median**: If the majority of points sit on one side of zero, the surrogate has a constant offset bias.
+
+---
+
+## Mathematical Formulation
+
+### Raw and Studentized Residuals
+
+Given actual evaluation $y_i$ and surrogate prediction $\hat{y}_i$, the raw residual is:
+
+$$e_i = y_i - \hat{y}_i$$
+
+Because raw residuals retain physical units and depend on parameter leverage, the **Studentized Residual** ($r_i$) is used for outlier screening:
+
+$$r_i = \frac{e_i}{\hat{\sigma} \sqrt{1 - h_{ii}}}$$
+
+where $\hat{\sigma} = \sqrt{\frac{1}{N - p - 1} \sum_{i=1}^N e_i^2}$ is the residual standard deviation and $h_{ii}$ is the leverage diagonal of the projection matrix $\mathbf{H} = \mathbf{X}(\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T$.
+
+### Coefficient of Determination ($R^2$) and Adjusted $R^2$
+
+$$R^2 = 1 - \frac{\sum_{i=1}^N (y_i - \hat{y}_i)^2}{\sum_{i=1}^N (y_i - \bar{y})^2}, \qquad R_{\text{adj}}^2 = 1 - \left[ \frac{(1 - R^2)(N - 1)}{N - k - 1} \right]$$
+
+### Root Mean Squared Error (RMSE)
+
+$$\text{RMSE} = \sqrt{ \frac{1}{N} \sum_{i=1}^N (y_i - \hat{y}_i)^2 }$$
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="Residuals and Influence in Regression"
+  authors="Cook, R. Dennis, & Weisberg, Sanford"
+  source="Chapman and Hall / CRC Monographs on Statistics and Applied Probability, ISBN: 978-0-412-24280-9"
+  year="1982"
+  indexing="Foundational Scopus Classic Monograph"
+  doi="https://conservancy.umn.edu/handle/11299/37076"
+  bibtex={`@book{cook1982residuals,
+  title={Residuals and Influence in Regression},
+  author={Cook, R Dennis and Weisberg, Sanford},
+  year={1982},
+  publisher={Chapman and Hall}
+}`}
+/>
+
+<CitationCard
+  title="Applied Regression Analysis (3rd Edition)"
+  authors="Draper, Norman R., & Smith, Harry"
+  source="John Wiley & Sons, New York, ISBN: 978-0-471-17082-2"
+  year="1998"
+  indexing="Wiley Interscience / Highly Cited Reference"
+  doi="10.1002/9781118625590"
+  bibtex={`@book{draper1998applied,
+  title={Applied regression analysis},
+  author={Draper, Norman R and Smith, Harry},
+  year={1998},
+  edition={3rd},
+  publisher={John Wiley \\& Sons}
+}`}
+/>
+
+<CitationCard
+  title="Graphs in Statistical Analysis"
+  authors="Anscombe, Francis J."
+  source="The American Statistician, Vol. 27, No. 1, pp. 17–21"
+  year="1973"
+  indexing="Taylor & Francis / Scopus Landmark Paper"
+  doi="10.1080/00031305.1973.10478966"
+  bibtex={`@article{anscombe1973graphs,
+  title={Graphs in statistical analysis},
+  author={Anscombe, Francis J},
+  journal={The American Statistician},
+  volume={27},
+  number={1},
+  pages={17--21},
+  year={1973},
+  publisher={Taylor \\& Francis}
+}`}
+/>

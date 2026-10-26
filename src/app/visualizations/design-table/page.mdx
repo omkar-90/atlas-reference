@@ -1,0 +1,176 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Design Table & Experimental Data Matrix
+
+The **Design Table** provides a structured, matrix-level view of computer experiments or empirical test datasets. In Design of Experiments (DoE) and surrogate modeling workflows, tabular inspection is the first checkpoint for evaluating data completeness, verifying parameter intervals, and screening for missing values or physical anomalies before training surrogate models.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Bounds Verification**: Ensure continuous parameters span the intended physical domain $[x_j^{\min}, x_j^{\max}]$ without accidental clustering at boundary values.
+- **Missing Value Screening**: Detect missing values ($NaN$) or zero values caused by failed simulation solvers (CFD/FEA) before initiating surrogate training.
+- **Factor Separation**: Distinguish independent design factors (inputs $\mathbf{x}$) from response quantities of interest (outputs $\mathbf{y}$).
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Layout
+
+<ChartPreview caption="Figure 1: Schematic of the Design Table showing input design parameters (x), output responses (y), status flags, and summary ranges.">
+  <svg viewBox="0 0 680 240" className="w-full h-auto max-w-[620px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Table background */}
+    <rect x="10" y="10" width="660" height="220" rx="8" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" />
+    
+    {/* Table header */}
+    <rect x="10" y="10" width="660" height="38" rx="8" fill="var(--ifm-color-emphasis-200)" />
+    <line x1="10" y1="48" x2="670" y2="48" stroke="var(--border-color)" strokeWidth="1" />
+    
+    {/* Header columns */}
+    <text x="30" y="34" fill="var(--ifm-font-color-base)" fontSize="12" fontWeight="600">Run ID</text>
+    <text x="110" y="34" fill="#4E79A7" fontSize="12" fontWeight="600">x₁: Radius (mm)</text>
+    <text x="240" y="34" fill="#4E79A7" fontSize="12" fontWeight="600">x₂: Blade Angle (°)</text>
+    <text x="380" y="34" fill="#59A14F" fontSize="12" fontWeight="600">y₁: Peak Stress (MPa)</text>
+    <text x="525" y="34" fill="#59A14F" fontSize="12" fontWeight="600">y₂: Efficiency (%)</text>
+    <text x="635" y="34" fill="var(--ifm-font-color-base)" fontSize="12" fontWeight="600">Status</text>
+    
+    {/* Row 1 */}
+    <rect x="10" y="49" width="660" height="32" fill="var(--ifm-background-card-color)" />
+    <text x="30" y="70" fill="var(--ifm-color-emphasis-700)" fontSize="11" fontFamily="monospace">001</text>
+    <text x="110" y="70" fill="var(--ifm-font-color-base)" fontSize="11">12.45</text>
+    <text x="240" y="70" fill="var(--ifm-font-color-base)" fontSize="11">24.5</text>
+    <text x="380" y="70" fill="var(--ifm-font-color-base)" fontSize="11">214.2</text>
+    <text x="525" y="70" fill="var(--ifm-font-color-base)" fontSize="11">88.4</text>
+    <circle cx="645" cy="66" r="4" fill="#59A14F" />
+
+    {/* Row 2 (Zebra) */}
+    <rect x="10" y="81" width="660" height="32" fill="var(--ifm-table-stripe-background)" />
+    <text x="30" y="102" fill="var(--ifm-color-emphasis-700)" fontSize="11" fontFamily="monospace">002</text>
+    <text x="110" y="102" fill="var(--ifm-font-color-base)" fontSize="11">15.10</text>
+    <text x="240" y="102" fill="var(--ifm-font-color-base)" fontSize="11">31.0</text>
+    <text x="380" y="102" fill="var(--ifm-font-color-base)" fontSize="11">268.7</text>
+    <text x="525" y="102" fill="var(--ifm-font-color-base)" fontSize="11">91.2</text>
+    <circle cx="645" cy="98" r="4" fill="#59A14F" />
+
+    {/* Row 3 - Highlighted missing */}
+    <rect x="10" y="113" width="660" height="32" fill="rgba(225, 87, 89, 0.08)" />
+    <text x="30" y="134" fill="var(--ifm-color-emphasis-700)" fontSize="11" fontFamily="monospace">003</text>
+    <text x="110" y="134" fill="var(--ifm-font-color-base)" fontSize="11">18.90</text>
+    <text x="240" y="134" fill="var(--ifm-font-color-base)" fontSize="11">15.2</text>
+    <text x="380" y="134" fill="#E15759" fontSize="11" fontWeight="600">NaN (Diverged)</text>
+    <text x="525" y="134" fill="#E15759" fontSize="11" fontWeight="600">NaN</text>
+    <circle cx="645" cy="130" r="4" fill="#E15759" />
+
+    {/* Row 4 (Zebra) */}
+    <rect x="10" y="145" width="660" height="32" fill="var(--ifm-table-stripe-background)" />
+    <text x="30" y="166" fill="var(--ifm-color-emphasis-700)" fontSize="11" fontFamily="monospace">004</text>
+    <text x="110" y="166" fill="var(--ifm-font-color-base)" fontSize="11">21.30</text>
+    <text x="240" y="166" fill="var(--ifm-font-color-base)" fontSize="11">42.8</text>
+    <text x="380" y="166" fill="var(--ifm-font-color-base)" fontSize="11">340.5</text>
+    <text x="525" y="166" fill="var(--ifm-font-color-base)" fontSize="11">82.1</text>
+    <circle cx="645" cy="162" r="4" fill="#59A14F" />
+
+    {/* Summary footer */}
+    <rect x="10" y="177" width="660" height="52" fill="var(--ifm-background-surface-color)" />
+    <line x1="10" y1="177" x2="670" y2="177" stroke="var(--border-color)" strokeWidth="1" />
+    <text x="30" y="202" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600">Bounds [Min, Max]:</text>
+    <text x="160" y="202" fill="#4E79A7" fontSize="11">[10.0, 25.0] mm</text>
+    <text x="280" y="202" fill="#4E79A7" fontSize="11">[15.0, 45.0] °</text>
+    <text x="400" y="202" fill="#59A14F" fontSize="11">[180, 420] MPa</text>
+    <text x="525" y="202" fill="#59A14F" fontSize="11">[75.0, 95.0] %</text>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Table
+
+### 1. Columns & Variable Types
+- **Run ID (Row Identifier)**: Index of each physical run or numerical simulation evaluation.
+- **Input Variables ($\mathbf{x}$)**: Independent factors specified by the Design of Experiments (e.g., geometric dimensions, material properties, operational conditions).
+- **Output Variables ($\mathbf{y}$)**: Dependent simulation results or measured metrics (e.g., maximum stress, mass, aerodynamic drag, thermal efficiency).
+- **Status Indicator**: Highlights whether solver output converged successfully (green) or encountered numerical divergence / unphysical values (red).
+
+### 2. What to Look For
+- **Incomplete / Missing Rows**: Look for entries with $NaN$, empty strings, or default zero fills. In multi-physics solvers, these typically indicate boundary condition crashes or meshing errors. Rows with missing outputs must either be re-computed or excluded before training.
+- **Boundary Clamping**: Check whether values repeatedly pile up at exact minimum or maximum bounds, which can indicate automated solver saturation or clipping.
+- **Order Effects & Duplication**: Confirm that rows reflect adequate space-filling diversity without duplicated design vectors.
+
+### 3. Step-by-Step Inspection Checklist
+1. **Sort columns** by minimum and maximum values to confirm reasonable physical units.
+2. **Filter out failed runs** ($NaN$) so they do not pollute surrogate model fitting.
+3. **Verify sample size $N$** satisfies the rule of thumb ($N \ge 10 \times d$) for $d$ active input factors.
+
+---
+
+## Mathematical Formulation
+
+In computer experiments, the design matrix $\mathbf{X}$ is formulated as an $N \times d$ matrix consisting of $N$ experimental design runs across $d$ input factors:
+
+$$\mathbf{X} = \begin{bmatrix} x_{11} & x_{12} & \cdots & x_{1d} \\ x_{21} & x_{22} & \cdots & x_{2d} \\ \vdots & \vdots & \ddots & \vdots \\ x_{N1} & x_{N2} & \cdots & x_{Nd} \end{bmatrix} \in \mathbb{R}^{N \times d}$$
+
+Associated with each design vector $\mathbf{x}_i = (x_{i1}, \dots, x_{id})^T$ is a vector of $p$ simulation or experimental responses $\mathbf{y}_i = (y_{i1}, \dots, y_{ip})^T \in \mathbb{R}^p$, producing the response matrix $\mathbf{Y} \in \mathbb{R}^{N \times p}$:
+
+$$\mathbf{Y} = \begin{bmatrix} y_{11} & y_{12} & \cdots & y_{1p} \\ \vdots & \vdots & \ddots & \vdots \\ y_{N1} & y_{N2} & \cdots & y_{Np} \end{bmatrix}$$
+
+### Space-Filling Metrics & Maximin Distance
+
+To verify that the sampling design is uniform without spatial clustering, the **maximin distance criterion** $\phi_q(\mathbf{X})$ is evaluated:
+
+$$\phi_q(\mathbf{X}) = \left( \sum_{1 \le i < j \le N} \frac{1}{\|\mathbf{x}_i - \mathbf{x}_j\|_2^q} \right)^{1/q}$$
+
+A well-conditioned design minimizes $\phi_q(\mathbf{X})$, preventing numerical singularity during Gaussian Process (Kriging) covariance inversion.
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="A Comparison of Three Methods for Selecting Values of Input Variables in the Analysis of Output from a Computer Code"
+  authors="McKay, M. D., Beckman, R. J., & Conover, W. J."
+  source="Technometrics, Vol. 21, No. 2, pp. 239–245"
+  year="1979"
+  indexing="Scopus Q1 / Web of Science"
+  doi="10.1080/00401706.1979.10489755"
+  bibtex={`@article{mckay1979comparison,
+  title={A comparison of three methods for selecting values of input variables in the analysis of output from a computer code},
+  author={McKay, Michael D and Beckman, Richard J and Conover, William J},
+  journal={Technometrics},
+  volume={21},
+  number={2},
+  pages={239--245},
+  year={1979},
+  publisher={Taylor \\& Francis}
+}`}
+/>
+
+<CitationCard
+  title="Design and Analysis of Experiments (9th Edition)"
+  authors="Montgomery, Douglas C."
+  source="John Wiley & Sons, New York, ISBN: 978-1-119-11347-8"
+  year="2017"
+  indexing="Authoritative Wiley Engineering Textbook"
+  doi="https://www.wiley.com/en-us/Design+and+Analysis+of+Experiments%2C+9th+Edition-p-9781119113478"
+  bibtex={`@book{montgomery2017design,
+  title={Design and analysis of experiments},
+  author={Montgomery, Douglas C},
+  year={2017},
+  edition={9th},
+  publisher={John Wiley \\& Sons}
+}`}
+/>
+
+<CitationCard
+  title="The Design and Analysis of Computer Experiments"
+  authors="Santner, Thomas J., Williams, Brian J., & Notz, William I."
+  source="Springer Series in Statistics, Springer New York, ISBN: 978-1-4939-8845-7"
+  year="2018"
+  indexing="Scopus Q1 Reference Text"
+  doi="10.1007/978-1-4939-8847-1"
+  bibtex={`@book{santner2018design,
+  title={The Design and Analysis of Computer Experiments},
+  author={Santner, Thomas J and Williams, Brian J and Notz, William I},
+  year={2018},
+  publisher={Springer}
+}`}
+/>

@@ -1,0 +1,155 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Signal & Field Plot: Functional Data Analysis (FDA)
+
+The **Signal / Field Plot** module extends surrogate modeling from discrete scalar metrics ($y \in \mathbb{R}$) to continuous physical curves ($y(t) \in \mathcal{L}^2(\mathcal{T})$) and spatial distributions. In transient dynamic simulations—such as vehicle crash pulses over time, combustion pressure cycles, aerodynamic airfoil distributions, or frequency response spectra—performance is evaluated as a continuous curve. This module applies **Functional Data Analysis (FDA)** to decompose, model, and predict complete functional trajectory envelopes.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Continuous Curve Surrogates**: Rather than fitting separate scalar models at arbitrary time slices, FDA models the entire continuous physical trajectory simultaneously.
+- **Variability Envelopes**: Displays the functional mean curve $\mu(t)$ flanked by confidence intervals ($\pm 1\sigma(t), \pm 2\sigma(t)$), pinpointing time windows of maximum physical variation.
+- **Phase vs. Amplitude Shifts**: Distinguishes whether curve variation arises from horizontal time shifts (e.g., ignition delays) or vertical amplitude scaling (e.g., shock magnitude).
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Graphic Interpretation
+
+<ChartPreview caption="Figure 1: Functional Data Analysis of transient response signals showing individual simulation runs (thin gray lines), mean trajectory μ(t) (blue curve), and ±1σ dynamic variability envelope (shaded area).">
+  <svg viewBox="0 0 540 280" className="w-full h-auto max-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Plot Canvas */}
+    <rect x="50" y="20" width="460" height="210" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" rx="4" />
+    
+    {/* Grid lines */}
+    <line x1="50" y1="75" x2="510" y2="75" stroke="var(--border-color)" strokeWidth="0.5" strokeDasharray="3 3" />
+    <line x1="50" y1="130" x2="510" y2="130" stroke="var(--border-color)" strokeWidth="0.5" strokeDasharray="3 3" />
+    <line x1="50" y1="185" x2="510" y2="185" stroke="var(--border-color)" strokeWidth="0.5" strokeDasharray="3 3" />
+
+    {/* +/- 1 sigma Shaded Envelope */}
+    <path d="M 60 190 Q 140 170 190 70 Q 240 50 280 110 T 360 170 T 480 190 L 480 215 Q 360 205 280 150 Q 240 100 190 120 Q 140 200 60 215 Z" fill="#2e5aac" opacity="0.15" />
+
+    {/* Individual Sample Curve Traces (Thin Gray) */}
+    <g stroke="var(--ifm-color-emphasis-700)" strokeWidth="1" fill="none" opacity="0.4">
+      <path d="M 60 205 Q 140 185 190 85 Q 240 70 280 125 T 360 185 T 480 200" />
+      <path d="M 60 200 Q 135 195 185 105 Q 235 80 275 140 T 355 190 T 480 205" />
+      <path d="M 60 210 Q 145 175 195 75 Q 245 60 285 115 T 365 180 T 480 195" />
+      <path d="M 60 202 Q 138 180 188 95 Q 238 65 278 130 T 358 182 T 480 202" />
+    </g>
+
+    {/* Mean Trajectory Curve mu(t) (Thick Blue) */}
+    <path d="M 60 203 Q 140 185 190 92 Q 240 72 280 130 T 360 185 T 480 202" fill="none" stroke="#2e5aac" strokeWidth="2.5" />
+
+    {/* Peak Divergence Marker */}
+    <line x1="190" y1="20" x2="190" y2="230" stroke="#E15759" strokeWidth="1" strokeDasharray="4 2" />
+    <circle cx="190" cy="92" r="4.5" fill="#E15759" stroke="#fff" strokeWidth="1.5" />
+    <text x="195" y="45" fill="#E15759" fontSize="10" fontWeight="600">Peak Variance Window</text>
+
+    {/* Axes Labels */}
+    <text x="280" y="260" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="middle" fontWeight="500">Domain / Time t (ms)</text>
+    <text x="18" y="125" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="middle" fontWeight="500" transform="rotate(-90 18 125)">Signal Amplitude Y(t)</text>
+
+    {/* Legend */}
+    <g transform="translate(370, 30)">
+      <line x1="0" y1="0" x2="18" y2="0" stroke="#2e5aac" strokeWidth="2.5" />
+      <text x="24" y="3" fill="var(--ifm-font-color-base)" fontSize="10" fontWeight="600">Mean μ(t)</text>
+      <rect x="0" y="12" width="18" height="10" fill="#2e5aac" opacity="0.25" />
+      <text x="24" y="21" fill="var(--ifm-color-emphasis-700)" fontSize="10">±1σ Envelope</text>
+    </g>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Plot
+
+### 1. Axes & Coordinates
+- **Horizontal Axis (t)**: The continuous independent domain (e.g., time in milliseconds, angle in degrees, or normalized spatial span $x/L$).
+- **Vertical Axis ($Y(t)$)**: The functional response quantity (e.g., cylinder pressure, structural reaction force, or aerodynamic lift coefficient).
+
+### 2. Reading Trajectory Envelopes
+- **Mean Curve $\mu(t)$ (Thick Line)**: The central baseline trajectory averaged across all design points.
+- **Variability Band ($\pm 1\sigma(t)$)**: A time-varying confidence envelope. Where the band is wide, input parameters exert strong control over the output; where the band pinches narrow, the response is physically constrained or insensitive to design changes.
+- **Peak Variance Window (Red Marker)**: Points out the exact time coordinate where design choices cause the greatest divergence in physical performance.
+
+### 3. Interpreting Functional Dynamics
+- **Amplitude Variation**: The curves peak at the same time coordinate ($t \approx 190\text{ ms}$), but vary in vertical height. This indicates that inputs control peak magnitude without altering dynamic frequency.
+- **Phase Variation (Timing Delays)**: If curves shift horizontally left and right, inputs control reaction speed, ignition delay, or natural frequency.
+
+---
+
+## Mathematical Formulation
+
+In Functional Data Analysis (Ramsay & Silverman, 2005), discrete sampled signals $\mathbf{y}_i = [y_{i1}, \dots, y_{iM}]^T$ are converted into continuous functions $x_i(t)$ using a linear combination of $K$ basis functions:
+
+$$x_i(t) = \sum_{k=1}^K c_{ik} \phi_k(t) = \mathbf{c}_i^T \boldsymbol{\phi}(t)$$
+
+### Basis Selection
+- **B-Splines**: Optimal for non-periodic transient dynamics (e.g. crash pulses, force-displacement).
+- **Fourier Basis**: Optimal for cyclic, periodic signals (e.g. rotating vibration spectra).
+
+### Functional Principal Component Analysis (FPCA)
+
+Surrogate models for continuous curves are constructed via the **Karhunen-Loève Expansion**:
+
+$$x_i(t) = \mu(t) + \sum_{k=1}^\infty \xi_{ik} \psi_k(t)$$
+
+where $\mu(t) = \frac{1}{N} \sum_{i=1}^N x_i(t)$ is the functional mean, $\psi_k(t)$ are orthogonal eigenfunctions, and $\xi_{ik}$ are scalar principal component scores.
+
+Standard Gaussian Process or Neural Network models are trained on the scalar scores $\xi_1(\mathbf{x}), \dots, \xi_K(\mathbf{x})$. When querying an unseen design $\mathbf{x}^*$, the predicted scores are converted back into a full continuous curve:
+
+$$\hat{y}(\mathbf{x}^*, t) = \mu(t) + \sum_{k=1}^K \hat{\xi}_k(\mathbf{x}^*) \psi_k(t)$$
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="Functional Data Analysis (2nd Edition)"
+  authors="Ramsay, J. O., & Silverman, B. W."
+  source="Springer Series in Statistics, Springer New York, ISBN: 978-0-387-40080-8"
+  year="2005"
+  indexing="Foundational Springer Series in Statistics Monograph"
+  doi="10.1007/b98888"
+  bibtex={`@book{ramsay2005functional,
+  title={Functional Data Analysis},
+  author={Ramsay, J O and Silverman, B W},
+  year={2005},
+  edition={2nd},
+  publisher={Springer}
+}`}
+/>
+
+<CitationCard
+  title="Functional Data Analysis"
+  authors="Wang, Jane-Ling, Chiou, Jeng-Min, & Müller, Hans-Georg"
+  source="Annual Review of Statistics and Its Application, Vol. 3, pp. 257–295"
+  year="2016"
+  indexing="Annual Reviews / Scopus Q1 Landmark Review"
+  doi="10.1146/annurev-statistics-041715-033624"
+  bibtex={`@article{wang2016functional,
+  title={Functional data analysis},
+  author={Wang, Jane-Ling and Chiou, Jeng-Min and M{\\"u}ller, Hans-Georg},
+  journal={Annual Review of Statistics and Its Application},
+  volume={3},
+  pages={257--295},
+  year={2016},
+  publisher={Annual Reviews}
+}`}
+/>
+
+<CitationCard
+  title="Nonparametric Functional Data Analysis: Theory and Practice"
+  authors="Ferraty, Frédéric, & Vieu, Philippe"
+  source="Springer Series in Statistics, Springer New York, ISBN: 978-0-387-30369-7"
+  year="2006"
+  indexing="Springer / Scopus Q1 Monograph"
+  doi="10.1007/0-387-36620-2"
+  bibtex={`@book{ferraty2006nonparametric,
+  title={Nonparametric Functional Data Analysis: Theory and Practice},
+  author={Ferraty, Fr{\\'e}d{\\'e}ric and Vieu, Philippe},
+  year={2006},
+  publisher={Springer}
+}`}
+/>

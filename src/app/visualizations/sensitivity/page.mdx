@@ -1,0 +1,172 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Sensitivity Matrix & Coefficient of Importance (CoI)
+
+The **Sensitivity Matrix** provides a fast, model-independent screening assessment of how strongly each input factor influences each target response. Using the **Spearman Coefficient of Importance ($\operatorname{CoI}$)** expressed as a normalized percentage ($0\%$ to $100\%$), this plot ranks input variables by impact prior to training surrogate models.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Dimensionality Reduction (Factor Fixing)**: Parameters contributing $< 2\%$ across all target responses can frequently be frozen at baseline values, simplifying subsequent training and optimization.
+- **Model-Free Screening**: Because $\operatorname{CoI}$ is computed directly on empirical or simulation samples using rank statistics, it does not depend on surrogate architecture or suffer from model fitting errors.
+- **Multi-Output Comparison**: High-dimensional datasets immediately expose which specific inputs control which physical performance criteria.
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Heatmap Interpretation
+
+<ChartPreview caption="Figure 1: Sensitivity Matrix showing Spearman Coefficient of Importance (CoI) in percentages. Each column sums to 100% across the active input factors.">
+  <svg viewBox="0 0 540 280" className="w-full h-auto max-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Grid background */}
+    <rect x="140" y="30" width="260" height="200" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" />
+    
+    {/* Labels X (Outputs) */}
+    <text x="205" y="20" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle" fontWeight="600">y₁: Peak Stress</text>
+    <text x="335" y="20" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle" fontWeight="600">y₂: Efficiency</text>
+
+    {/* Labels Y (Inputs) */}
+    <text x="130" y="60" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₁: Radius</text>
+    <text x="130" y="110" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₂: Blade Angle</text>
+    <text x="130" y="160" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₃: Wall Thickness</text>
+    <text x="130" y="210" fill="var(--ifm-font-color-base)" fontSize="11" textAnchor="end" fontWeight="500">x₄: Fillet Radius</text>
+
+    {/* Column 1: Stress (y1) */}
+    {/* x1: 68% */}
+    <rect x="140" y="30" width="130" height="50" fill="#2e5aac" opacity="0.85" />
+    <text x="205" y="60" fill="#fff" fontSize="13" textAnchor="middle" fontWeight="600">68.2 %</text>
+
+    {/* x2: 4% */}
+    <rect x="140" y="80" width="130" height="50" fill="#2e5aac" opacity="0.15" />
+    <text x="205" y="110" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle">4.1 %</text>
+
+    {/* x3: 26% */}
+    <rect x="140" y="130" width="130" height="50" fill="#2e5aac" opacity="0.45" />
+    <text x="205" y="160" fill="#fff" fontSize="12" textAnchor="middle" fontWeight="600">26.3 %</text>
+
+    {/* x4: 1.4% (Fixable) */}
+    <rect x="140" y="180" width="130" height="50" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="0.5" />
+    <text x="205" y="210" fill="var(--ifm-color-emphasis-700)" fontSize="11" textAnchor="middle">1.4 %</text>
+
+    {/* Column 2: Efficiency (y2) */}
+    {/* x1: 5% */}
+    <rect x="270" y="30" width="130" height="50" fill="#2e5aac" opacity="0.18" />
+    <text x="335" y="60" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle">5.3 %</text>
+
+    {/* x2: 82% */}
+    <rect x="270" y="80" width="130" height="50" fill="#2e5aac" opacity="0.95" />
+    <text x="335" y="110" fill="#fff" fontSize="13" textAnchor="middle" fontWeight="600">82.4 %</text>
+
+    {/* x3: 11% */}
+    <rect x="270" y="130" width="130" height="50" fill="#2e5aac" opacity="0.28" />
+    <text x="335" y="160" fill="var(--ifm-font-color-base)" fontSize="12" textAnchor="middle">11.1 %</text>
+
+    {/* x4: 1.2% (Fixable) */}
+    <rect x="270" y="180" width="130" height="50" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="0.5" />
+    <text x="335" y="210" fill="var(--ifm-color-emphasis-700)" fontSize="11" textAnchor="middle">1.2 %</text>
+
+    {/* Legend Color Bar on the Right */}
+    <defs>
+      <linearGradient id="sensGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stopColor="var(--ifm-background-surface-color)" />
+        <stop offset="100%" stopColor="#2e5aac" />
+      </linearGradient>
+    </defs>
+    <rect x="430" y="45" width="16" height="170" rx="3" fill="url(#sensGrad)" stroke="var(--border-color)" strokeWidth="1" />
+    <text x="455" y="52" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600">100%</text>
+    <text x="455" y="135" fill="var(--ifm-color-emphasis-700)" fontSize="11">50%</text>
+    <text x="455" y="215" fill="var(--ifm-color-emphasis-700)" fontSize="11">0%</text>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Plot
+
+### 1. Axes & Columns
+- **Vertical Axis (Rows)**: Design parameters and input variables ($x_1, \dots, x_d$).
+- **Horizontal Axis (Columns)**: System responses ($y_1, \dots, y_p$).
+- **Column Normalization**: Every vertical column sums to exactly $100\%$. The values quantify the relative share of response variance driven by each input.
+
+### 2. Reading Color Saturation & Percentages
+- **Deep Blue Cells ($\operatorname{CoI} \ge 50\%$)**: Primary driving factors. These parameters govern the output and should be treated as core variables in optimization.
+- **Medium Blue Cells ($10\% \le \operatorname{CoI} < 50\%$)**: Secondary influential factors that provide fine-tuning capability.
+- **Pale / White Cells ($\operatorname{CoI} < 2\%$)**: Negligible factors. Variations in these inputs have little to no measurable effect on that response.
+
+### 3. Actionable Interpretation Rules
+1. **Factor Prioritization**: Focus optimization on the top 1 or 2 variables per response (e.g., $x_1$ for Peak Stress, $x_2$ for Efficiency).
+2. **Factor Fixing**: If an input factor scores $< 2\%$ across *all* columns (such as $x_4$ Fillet Radius with $1.4\%$ and $1.2\%$), it can be fixed to a constant nominal value. This reduces problem dimensionality without loss of model accuracy.
+3. **Decoupled Control**: Notice in Figure 1 that $x_1$ controls Stress while having little influence on Efficiency ($5.3\%$), while $x_2$ controls Efficiency while having little influence on Stress ($4.1\%$). This indicates that the two physical responses can be tuned almost independently.
+
+---
+
+## Mathematical Formulation
+
+Let $d$ denote the number of input design variables and $p$ denote the number of responses. For response $y_m$ ($m = 1, \dots, p$), the Spearman rank correlation with input factor $x_j$ ($j = 1, \dots, d$) is $\rho(x_j, y_m)$.
+
+The **Spearman Coefficient of Importance ($\operatorname{CoI}$)** expresses the relative proportion of monotonic variance attributed to input factor $x_j$ for output $y_m$:
+
+$$\operatorname{CoI}_j^{(m)} = \frac{\rho^2(x_j, y_m)}{\sum_{k=1}^d \rho^2(x_k, y_m)} \times 100\%$$
+
+Key properties:
+1. $\sum_{j=1}^d \operatorname{CoI}_j^{(m)} = 100\%$ for every response $y_m$.
+2. $\operatorname{CoI}_j^{(m)} \ge 0$ for all factors.
+3. The metric preserves monotonic rank invariance even when responses exhibit heavy power-law or logarithmic tails.
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="Global Sensitivity Analysis: The Primer"
+  authors="Saltelli, Andrea, Ratto, Marco, Andres, Terry, Campolongo, Francesca, Cariboni, Jessica, Gatelli, Debora, Saisana, Michaela, & Tarantola, Stefano"
+  source="John Wiley & Sons, Ltd, Chichester, UK, ISBN: 978-0-470-05997-5"
+  year="2008"
+  indexing="Foundational Scopus Q1 Landmark Text"
+  doi="10.1002/9780470725184"
+  bibtex={`@book{saltelli2008global,
+  title={Global sensitivity analysis: the primer},
+  author={Saltelli, Andrea and Ratto, Marco and Andres, Terry and Campolongo, Francesca and Cariboni, Jessica and Gatelli, Debora and Saisana, Michaela and Tarantola, Stefano},
+  year={2008},
+  publisher={John Wiley \\& Sons}
+}`}
+/>
+
+<CitationCard
+  title="Factorial Sampling Plans for Preliminary Computational Experiments"
+  authors="Morris, Max D."
+  source="Technometrics, Vol. 33, No. 2, pp. 161–174"
+  year="1991"
+  indexing="Scopus Q1 / Web of Science"
+  doi="10.1080/00401706.1991.10484804"
+  bibtex={`@article{morris1991factorial,
+  title={Factorial sampling plans for preliminary computational experiments},
+  author={Morris, Max D},
+  journal={Technometrics},
+  volume={33},
+  number={2},
+  pages={161--174},
+  year={1991},
+  publisher={Taylor \\& Francis}
+}`}
+/>
+
+<CitationCard
+  title="Survey of Sampling-Based Methods for Uncertainty and Sensitivity Analysis"
+  authors="Helton, J. C., Johnson, J. D., Sallaberry, C. J., & Storlie, C. B."
+  source="Reliability Engineering & System Safety, Vol. 91, No. 10-11, pp. 1175–1209"
+  year="2006"
+  indexing="Elsevier / Scopus Q1"
+  doi="10.1016/j.ress.2005.11.017"
+  bibtex={`@article{helton2006survey,
+  title={Survey of sampling-based methods for uncertainty and sensitivity analysis},
+  author={Helton, Jon C and Johnson, Jay D and Sallaberry, C{\\'e}dric J and Storlie, Curtis B},
+  journal={Reliability Engineering \\& System Safety},
+  volume={91},
+  number={10-11},
+  pages={1175--1209},
+  year={2006},
+  publisher={Elsevier}
+}`}
+/>

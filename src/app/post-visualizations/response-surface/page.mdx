@@ -1,0 +1,175 @@
+import CitationCard from '../../../components/CitationCard';
+import KeyTakeaways from '../../../components/KeyTakeaways';
+import ChartPreview from '../../../components/ChartPreview';
+import MathBlock from '../../../components/MathBlock';
+
+# Response Surface Methodology (RSM) & Surrogate Landscapes
+
+The **Response Surface** module renders continuous 3D topographical landscapes and 2D contour projections of trained surrogate metamodels (such as Kriging / Gaussian Process Regression, Support Vector Machines, Radial Basis Functions, or Neural Networks). In engineering optimization, response surfaces replace expensive, hours-long simulation runs with real-time continuous models, enabling rapid exploration of performance peaks, valleys, and saddle points.
+
+<KeyTakeaways title="Quick Guide & Key Takeaways">
+- **Hyperplane Slicing**: When evaluating systems with $d > 2$ input parameters, the remaining $(d-2)$ variables are held fixed at designated baseline values (typically the median or current best design).
+- **Curvature & Non-Linearity**: Valleys, ridges, and saddle shapes reveal coupled interaction terms between the selected parameter pair.
+- **Uncertainty Bounds**: In Kriging models, prediction variance $s^2(\mathbf{x})$ confirms that model confidence is highest near dense training points and lower in un-sampled voids.
+</KeyTakeaways>
+
+---
+
+## Visual Preview & Graphic Interpretation
+
+<ChartPreview caption="Figure 1: 3D Response Surface landscape with contour elevation projection, sample training points (black markers), and global optimum peak.">
+  <svg viewBox="0 0 540 310" className="w-full h-auto max-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Plot Canvas */}
+    <rect x="30" y="20" width="480" height="260" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" rx="6" />
+
+    {/* 3D Coordinate Reference Lines */}
+    <line x1="80" y1="230" x2="280" y2="260" stroke="var(--ifm-color-emphasis-700)" strokeWidth="1.5" />
+    <line x1="280" y1="260" x2="460" y2="200" stroke="var(--ifm-color-emphasis-700)" strokeWidth="1.5" />
+    <line x1="80" y1="230" x2="80" y2="70" stroke="var(--ifm-color-emphasis-700)" strokeWidth="1.5" />
+
+    {/* Axis Titles */}
+    <text x="170" y="260" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600">x₁: Radius</text>
+    <text x="385" y="245" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600">x₂: Blade Angle</text>
+    <text x="70" y="60" fill="var(--ifm-font-color-base)" fontSize="11" fontWeight="600" textAnchor="middle">ŷ (Response)</text>
+
+    {/* 3D Wireframe / Contour Mesh Surface */}
+    {/* Mesh base / valley */}
+    <path d="M 120 210 Q 200 235 280 230 T 440 180" stroke="var(--border-color)" strokeWidth="1" fill="none" />
+    <path d="M 110 180 Q 200 205 280 200 T 430 150" stroke="var(--border-color)" strokeWidth="1" fill="none" />
+    
+    {/* Colored Topography Shading */}
+    <defs>
+      <linearGradient id="surfGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+        <stop offset="0%" stopColor="#4E79A7" stopOpacity="0.3" />
+        <stop offset="50%" stopColor="#76B7B2" stopOpacity="0.5" />
+        <stop offset="100%" stopColor="#2e5aac" stopOpacity="0.8" />
+      </linearGradient>
+    </defs>
+
+    {/* Mountain Dome / Surface Silhouette */}
+    <path d="M 90 200 Q 150 170 200 130 Q 260 80 300 80 Q 360 85 410 140 T 450 175 L 430 215 L 280 250 L 100 220 Z" fill="url(#surfGrad)" stroke="#2e5aac" strokeWidth="1.5" />
+
+    {/* Contour Curves across the dome */}
+    <path d="M 140 160 Q 230 110 300 100 Q 360 100 400 150" stroke="#fff" strokeWidth="1" strokeDasharray="3 2" fill="none" opacity="0.7" />
+    <path d="M 180 130 Q 250 90 300 90 Q 340 90 370 130" stroke="#fff" strokeWidth="1" strokeDasharray="3 2" fill="none" opacity="0.85" />
+
+    {/* Optimum Point (Peak) */}
+    <circle cx="300" cy="80" r="5" fill="#59A14F" stroke="#fff" strokeWidth="1.5" />
+    <text x="300" y="65" fill="#59A14F" fontSize="11" fontWeight="700" textAnchor="middle">Global Maximum</text>
+
+    {/* Actual Evaluated Samples (Scatter points on surface) */}
+    <g fill="var(--ifm-font-color-base)">
+      <circle cx="160" cy="180" r="3" />
+      <circle cx="210" cy="140" r="3" />
+      <circle cx="270" cy="115" r="3" />
+      <circle cx="350" cy="110" r="3" />
+      <circle cx="380" cy="145" r="3" />
+      <circle cx="250" cy="170" r="3" />
+      <circle cx="320" cy="155" r="3" />
+    </g>
+
+    {/* Slicing Notice */}
+    <rect x="330" y="30" width="160" height="24" rx="4" fill="var(--ifm-background-surface-color)" stroke="var(--border-color)" strokeWidth="1" />
+    <text x="410" y="46" fill="var(--ifm-color-emphasis-700)" fontSize="10" textAnchor="middle">Sliced at: x₃ = 2.5 mm, x₄ = 12°</text>
+  </svg>
+</ChartPreview>
+
+---
+
+## How to Read This Plot
+
+### 1. Axes & Coordinates
+- **Base Grid ($X_1$ and $X_2$)**: Two continuous input parameters selected for visualization.
+- **Vertical Axis ($Z$ / Elevation)**: Predicted surrogate response $\hat{y}(x_1, x_2)$ (e.g. Efficiency or Maximum Pressure).
+- **Contour Rings**: Isoline contours connecting points of identical performance, similar to a topographic elevation map.
+
+### 2. Identifying Surface Topology
+- **Peaks (Domes)**: Regions of local or global maximum. In efficiency maximization or power yield problems, the highest crest identifies the optimum design point.
+- **Valleys (Basins)**: Regions of local or global minimum. Useful when minimizing mass, aerodynamic drag, or mechanical stress.
+- **Ridges & Ravines**: Elongated diagonal hills or valleys indicating that multiple combinations of $x_1$ and $x_2$ yield similar performance.
+- **Saddle Points**: Points that are a maximum along one cross-section and a minimum along another. These require multi-directional gradient exploration.
+
+### 3. Interpreting Slices in High-Dimensional Problems
+- If the dataset has more than two inputs ($d > 2$), the 3D surface represents a **2D slice** through high-dimensional space.
+- The remaining $(d-2)$ variables are held constant at fixed baseline values (displayed in the top-right indicator).
+- When tuning parameters, shift the slice sliders to observe whether the peak shifts location, which indicates higher-order coupling between active and sliced parameters.
+
+---
+
+## Mathematical Formulation
+
+Under Gaussian Process Regression (Kriging), the deterministic simulation response $y(\mathbf{x})$ is modeled as a trend plus a stationary Gaussian random process:
+
+$$Y(\mathbf{x}) = \mathbf{f}(\mathbf{x})^T \boldsymbol{\beta} + Z(\mathbf{x})$$
+
+where $Z(\mathbf{x})$ has spatial covariance $\operatorname{Cov}\big(Z(\mathbf{x}), Z(\mathbf{x}')\big) = \sigma^2 R(\mathbf{x}, \mathbf{x}', \boldsymbol{\theta})$.
+
+### Best Linear Unbiased Predictor (BLUP)
+
+Given training observations $\mathbf{y} \in \mathbb{R}^N$, the surrogate prediction at any query point $\mathbf{x}^*$ is:
+
+$$\hat{y}(\mathbf{x}^*) = \mathbf{f}(\mathbf{x}^*)^T \hat{\boldsymbol{\beta}} + \mathbf{r}(\mathbf{x}^*)^T \mathbf{R}^{-1} \left( \mathbf{y} - \mathbf{F} \hat{\boldsymbol{\beta}} \right)$$
+
+where $\mathbf{r}(\mathbf{x}^*)$ is the cross-correlation vector and $\mathbf{R}$ is the correlation matrix across evaluated points.
+
+### Prediction Variance
+
+The epistemic uncertainty at query location $\mathbf{x}^*$ is:
+
+$$s^2(\mathbf{x}^*) = \sigma^2 \left[ 1 - \mathbf{r}(\mathbf{x}^*)^T \mathbf{R}^{-1} \mathbf{r}(\mathbf{x}^*) + \mathbf{u}(\mathbf{x}^*)^T \left( \mathbf{F}^T \mathbf{R}^{-1} \mathbf{F} \right)^{-1} \mathbf{u}(\mathbf{x}^*) \right]$$
+
+Near training points, $s^2(\mathbf{x}^*) \to 0$, while in empty design space voids, $s^2(\mathbf{x}^*)$ expands, signaling where additional simulation runs should be placed.
+
+---
+
+## Peer-Reviewed References
+
+<CitationCard
+  title="Response Surface Methodology: Process and Product Optimization Using Designed Experiments (4th Edition)"
+  authors="Myers, Raymond H., Montgomery, Douglas C., & Anderson-Cook, Christine M."
+  source="John Wiley & Sons, Hoboken, NJ, ISBN: 978-1-118-91601-8"
+  year="2016"
+  indexing="Authoritative Wiley Textbook / Highly Cited"
+  doi="https://www.wiley.com/en-us/Response+Surface+Methodology%3A+Process+and+Product+Optimization+Using+Designed+Experiments%2C+4th+Edition-p-9781118916018"
+  bibtex={`@book{myers2016response,
+  title={Response surface methodology: process and product optimization using designed experiments},
+  author={Myers, Raymond H and Montgomery, Douglas C and Anderson-Cook, Christine M},
+  year={2016},
+  edition={4th},
+  publisher={John Wiley \\& Sons}
+}`}
+/>
+
+<CitationCard
+  title="Engineering Design via Surrogate Modelling: A Practical Guide"
+  authors="Forrester, Alexander, Sobester, Andras, & Keane, Andy"
+  source="American Institute of Aeronautics and Astronautics (AIAA) / John Wiley & Sons, ISBN: 978-0-470-05820-6"
+  year="2008"
+  indexing="Wiley / AIAA Aerospace Engineering Standard"
+  doi="10.1002/9780470770801"
+  bibtex={`@book{forrester2008engineering,
+  title={Engineering design via surrogate modelling: a practical guide},
+  author={Forrester, Alexander and Sobester, Andras and Keane, Andy},
+  year={2008},
+  publisher={John Wiley \\& Sons}
+}`}
+/>
+
+<CitationCard
+  title="Design and Analysis of Computer Experiments"
+  authors="Sacks, Jerome, Welch, William J., Mitchell, Toby J., & Wynn, Henry P."
+  source="Statistical Science, Vol. 4, No. 4, pp. 409–423"
+  year="1989"
+  indexing="Institute of Mathematical Statistics / Scopus Q1"
+  doi="10.1214/ss/1177012413"
+  bibtex={`@article{sacks1989design,
+  title={Design and analysis of computer experiments},
+  author={Sacks, Jerome and Welch, William J and Mitchell, Toby J and Wynn, Henry P},
+  journal={Statistical Science},
+  volume={4},
+  number={4},
+  pages={409--423},
+  year={1989},
+  publisher={Institute of Mathematical Statistics}
+}`}
+/>
